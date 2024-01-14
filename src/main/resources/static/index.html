@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="hu">
+	<head>
+		<meta charset="UTF-8">
+		<title>REVEAL CHAT APP</title>
+		<link rel="icon" type="image/x-icon" href="/img/fav-icon.ico">
+		<link rel="stylesheet" href="css/styles.css" type="text/css">
+	</head>
+	<body>
+		<div id="bar" class="unselectable">
+			<a href=".">
+				<span style="color:yellow">R</span>eveal 
+				<span style="color:yellow">C</span>hat 
+				<span style="color:yellow">A</span>pp
+			</a>
+		</div>
+
+		<div id="login" class="center-container">
+			<form id="loginForm">
+				<div class="left-container">
+					<label>
+						Nemed:
+						<select id="gender">
+							<option value="">Válassz</option>
+							<option value="MALE">Férfi</option>
+							<option value="FEMALE">Nő</option>
+						</select>
+					</label>
+					<label>
+						Korod:
+						<input type="number" id="age" name="age">
+					</label>
+					<label>
+						Facebook azonosító:
+						<input type="text" id="userName" name="userName">
+					</label>
+				</div>
+				<hr class="hr" />
+				<p>Válaszd ki, milyen témában szeretnél beszélgetni:</p>
+				<div id="topics" class="unselectable form-border container">
+					<label>
+						<input type="checkbox" name="topic" value="SPORT" />
+						Sport
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="GAMING" />
+						Játékok
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="TRAVELING" />
+						Utazás
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="FOOD" />
+						Ételek
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="STUDIES" />
+						Tanulás
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="CODING" />
+						Kódolás
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="CARS" />
+						Autók
+					</label>
+					
+					<label>
+						<input type="checkbox" name="topic" value="MOVIES" />
+						Filmek
+					</label>
+
+					<label>
+						<input type="checkbox" name="topic" value="MUSIC" />
+						Zenék
+					</label>
+
+				</div>
+				<hr class="hr"  />
+				<div class="unselectable left-container">
+					<label>
+						Milyen nemű legyen a partnered?
+						<select id="partnerGender">
+							<option value="BOTH">Mindegy</option>
+							<option value="MALE">Férfi</option>
+							<option value="FEMALE">Nő</option>
+						</select>
+					</label>
+
+					<label>
+						Minimum hány éves legyen a partnered?
+						<input type="number" id="partnerMinAge" name="partnerMinAge">
+					</label>
+
+					<label>
+						Maximum hány éves legyen a partnered?
+						<input type="number" id="partnerMaxAge" name="partnerMaxAge">
+					</label>
+
+				</div>
+				<div class="flex-container">
+
+					<input type="submit" class="center login-button" value="CHAT">
+				</div>
+				
+			</form>
+		</div>
+
+		<div id="pending-text" class="hide middle unselectable">
+			<h1>Csevegőpartner keresése...</h1>
+		</div>
+
+		<div id="reveal-panel" class="center">
+
+			<div id="request-window" class="hide unselectable">
+				<h2>A csevegőtársad <strong>REVEAL</strong>-t kezdeményezett.</h2>
+				<h1>Beleegyezel?</h1>
+				<button id="reveal-agree-button" class="button">Mehet</button>
+				<button id="reveal-refuse-button" class="button">Elutasítom</button>
+			</div>
+
+			<div id="reveal-data" class="hide">
+				<h2>A csevegőtársad adatai:</h2>
+				<p id="reveal-age"></p>
+				<p id="reveal-social"></p>
+				<p id="reveal-topics"></p>
+			</div>
+
+			<button id="reveal-button" class="hide button">REVEAL</button>
+		</div>
+		<div id="chat-panel" class="hide middle">
+
+			<div id="chat-window"></div>
+			<input type="text" id="message-input" placeholder="Írj egy üzenetet...">
+			
+		</div>
+		<div id="error-text" class="unselectable trans-back"></div>
+
+	</div>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.4.0/sockjs.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+	<script type="text/javascript" src="https://momentjs.com/downloads/moment-with-locales.js"></script>
+	<script src="js/min.js"></script>	
+	</body>
+</html>
