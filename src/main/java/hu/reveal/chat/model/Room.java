@@ -1,21 +1,10 @@
-package hu.nye.chat.model;
+package hu.reveal.chat.model;
 
-import hu.nye.chat.enums.Topic;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import hu.reveal.chat.enums.Topic;
 
 import java.util.ArrayList;
-import java.util.List;
 
-@AllArgsConstructor
-@Getter
-@ToString
-public final class Room {
-
-    private final String id;
-    private final Topic topic;
-    private final List<User> users;
+public record Room(String id, Topic topic, ArrayList<User> users) {
 }
 
 

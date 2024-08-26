@@ -1,16 +1,8 @@
-package hu.nye.chat.model;
+package hu.reveal.chat.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import java.util.ArrayList;
 
-import java.util.List;
-
-@AllArgsConstructor
-@Getter
-public class MessageArea {
-
-    private final List<Room> rooms;
-    private final List<User> pendingUsers;
+public record MessageArea(ArrayList<Room> rooms, ArrayList<User> pendingUsers) {
 
     public void addRoom(Room room) {
         rooms.add(room);

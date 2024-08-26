@@ -1,4 +1,4 @@
-package hu.nye.chat.enums;
+package hu.reveal.chat.enums;
 
 public enum Gender {
     MALE,

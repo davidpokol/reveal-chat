@@ -1,6 +1,6 @@
-package hu.nye.chat.controller;
+package hu.reveal.chat.controller;
 
-import hu.nye.chat.service.impl.ChatServiceImpl;
+import hu.reveal.chat.service.impl.ChatServiceImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

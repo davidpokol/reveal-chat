@@ -1,4 +1,4 @@
-package hu.nye.chat.configuration;
+package hu.reveal.chat.configuration;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;

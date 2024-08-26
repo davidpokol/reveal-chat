@@ -1,8 +1,8 @@
-package hu.nye.chat.configuration;
+package hu.reveal.chat.configuration;
 
-import hu.nye.chat.model.MessageArea;
-import hu.nye.chat.model.Room;
-import hu.nye.chat.model.User;
+import hu.reveal.chat.model.MessageArea;
+import hu.reveal.chat.model.Room;
+import hu.reveal.chat.model.User;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

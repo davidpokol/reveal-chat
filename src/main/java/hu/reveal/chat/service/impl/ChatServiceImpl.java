@@ -1,32 +1,41 @@
-package hu.nye.chat.service.impl;
+package hu.reveal.chat.service.impl;
 
-import hu.nye.chat.enums.MessageType;
-import hu.nye.chat.enums.Topic;
-import hu.nye.chat.model.*;
-import hu.nye.chat.service.ChatService;
-import hu.nye.chat.service.util.ChatServiceImplUtil;
-import javafx.util.Pair;
+import hu.reveal.chat.enums.MessageType;
+import hu.reveal.chat.enums.Topic;
+import hu.reveal.chat.model.Message;
+import hu.reveal.chat.model.MessageArea;
+import hu.reveal.chat.model.Room;
+import hu.reveal.chat.model.User;
+import hu.reveal.chat.service.ChatService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static hu.reveal.chat.service.util.ChatServiceUtil.getFilteredUsersByTopics;
+import static hu.reveal.chat.service.util.ChatServiceUtil.getRandomTopic;
+import static hu.reveal.chat.service.util.ChatServiceUtil.getUserToAge;
+import static hu.reveal.chat.service.util.ChatServiceUtil.isMatchAgeRequests;
+import static hu.reveal.chat.service.util.ChatServiceUtil.isMatchGenderRequests;
 
 @Service
 public class ChatServiceImpl implements ChatService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChatServiceImpl.class);
-    private final ChatServiceImplUtil serviceUtil;
     private final MessageArea messageArea;
     private final SimpMessagingTemplate simpMessagingTemplate;
 
     @Autowired
-    public ChatServiceImpl(ChatServiceImplUtil serviceUtil,
-                           MessageArea messageArea,
+    public ChatServiceImpl(MessageArea messageArea,
                            SimpMessagingTemplate simpMessagingTemplate) {
-        this.serviceUtil = serviceUtil;
         this.messageArea = messageArea;
         this.simpMessagingTemplate = simpMessagingTemplate;
     }
@@ -36,10 +45,11 @@ public class ChatServiceImpl implements ChatService {
         messageArea.addUser(user);
         LOG.info("User added to pending: {}", user);
     }
+
     @Override
     public boolean removePendingUserById(final String userId) {
-        Optional<User> userToRemove = messageArea.getPendingUsers().stream()
-                .filter(user -> user.getId().equals(userId))
+        Optional<User> userToRemove = messageArea.pendingUsers().stream()
+                .filter(user -> user.id().equals(userId))
                 .findFirst();
 
         if (userToRemove.isPresent()) {
@@ -51,7 +61,7 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public Room createRoom(final List<User> users, final Topic topic) {
+    public Room createRoom(final ArrayList<User> users, final Topic topic) {
 
         String roomId = UUID.randomUUID().toString();
         return new Room(roomId, topic, users);
@@ -66,18 +76,18 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public Optional<String> getRoomIdByUserId(String userId) {
 
-        return messageArea.getRooms()
+        return messageArea.rooms()
                 .stream()
-                .filter(room -> room.getUsers().stream().anyMatch(user -> user.getId().equals(userId)))
-                .map(Room::getId)
+                .filter(room -> room.users().stream().anyMatch(user -> user.id().equals(userId)))
+                .map(Room::id)
                 .findFirst();
     }
 
     @Override
     public void removeRoomById(final String roomId) {
 
-        Optional<Room> roomToRemove = messageArea.getRooms().stream()
-                .filter(room -> room.getId().equals(roomId))
+        Optional<Room> roomToRemove = messageArea.rooms().stream()
+                .filter(room -> room.id().equals(roomId))
                 .findFirst();
 
         roomToRemove.ifPresent(messageArea::removeRoom);
@@ -87,19 +97,20 @@ public class ChatServiceImpl implements ChatService {
     public void sendMessage(Message message) {
         Optional<String> receiverId = getReceiverId(message.getSenderId());
 
-        if(receiverId.isPresent()) {
+        if (receiverId.isPresent()) {
             simpMessagingTemplate.convertAndSendToUser(receiverId.get(), "/messages", message);
             LOG.info("New message sent: message: {} receiverId: {}", message, receiverId);
         }
     }
+
     @Override
     public void sendConnectMessage(User sender, String receiverId, Topic topic) {
 
         simpMessagingTemplate.convertAndSendToUser(receiverId, "/messages",
                 new Message(
                         MessageType.CONNECT,
-                        sender.getId(),
-                        sender.getGender(),
+                        sender.id(),
+                        sender.gender(),
                         topic.toString(),
                         new Date().toString())
         );
@@ -110,7 +121,7 @@ public class ChatServiceImpl implements ChatService {
 
         Optional<String> receiverId = getReceiverId(senderId);
 
-        if(receiverId.isEmpty()) { // If a user wants to send a message to an abandoned room
+        if (receiverId.isEmpty()) { // If a user wants to send a message to an abandoned room
             return;
         }
         simpMessagingTemplate.convertAndSendToUser(
@@ -122,29 +133,30 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public List<User> getPossiblePartnersWithNoTopic(User userOne) {
-        List<User> possibleUsers = new ArrayList<>();
-            for (User pendingUser : messageArea.getPendingUsers()) {
-                if (pendingUser.getTopics().isEmpty()
-                        && serviceUtil.isMatchAgeRequests(userOne, pendingUser)
-                        && serviceUtil.isMatchGenderRequests(userOne, pendingUser)) {
-                    possibleUsers.add(pendingUser);
-                }
+    public ArrayList<User> getPossiblePartnersWithNoTopic(User userOne) {
+        ArrayList<User> possibleUsers = new ArrayList<>();
+        for (User pendingUser : messageArea.pendingUsers()) {
+            if (pendingUser.topics().isEmpty()
+                    && isMatchAgeRequests(userOne, pendingUser)
+                    && isMatchGenderRequests(userOne, pendingUser)) {
+                possibleUsers.add(pendingUser);
             }
-            return possibleUsers;
+        }
+        return possibleUsers;
     }
+
     @Override
-    public List<User> getPossiblePartnersWithTopic(User userOne) {
+    public ArrayList<User> getPossiblePartnersWithTopic(User userOne) {
 
-        List<User> possiblePartners = new ArrayList<>();
+        ArrayList<User> possiblePartners = new ArrayList<>();
 
-        for (User pendingUser : messageArea.getPendingUsers()) {
+        for (User pendingUser : messageArea.pendingUsers()) {
 
-            for (Topic pendingUserTopic : pendingUser.getTopics()) {
-                for (Topic newUserTopic : userOne.getTopics()) {
+            for (Topic pendingUserTopic : pendingUser.topics()) {
+                for (Topic newUserTopic : userOne.topics()) {
                     if (pendingUserTopic.equals(newUserTopic)
-                            && serviceUtil.isMatchAgeRequests(userOne, pendingUser)
-                            && serviceUtil.isMatchGenderRequests(userOne, pendingUser)) {
+                            && isMatchAgeRequests(userOne, pendingUser)
+                            && isMatchGenderRequests(userOne, pendingUser)) {
                         possiblePartners.add(pendingUser);
                         break;
                     }
@@ -155,37 +167,46 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public Pair<User,Topic> getMostAppropriatePartnerWithTopic(User userOne, List<User> possibleUsers) {
+    public HashMap<User, Topic> getMostAppropriatePartnerWithTopic(User userOne, ArrayList<User> possibleUsers) {
 
-        if (userOne.getTopics().isEmpty()) {
-            return new Pair<>(serviceUtil.getUserToAge(userOne.getAge(), possibleUsers).get(), Topic.NONE);
+        if (userOne.topics().isEmpty()) {
+            return new HashMap<>() {
+                {
+                    put(getUserToAge(userOne.age(), possibleUsers).get(), Topic.NONE);
+                }
+            };
         }
 
-        List<User> filteredByTopics = serviceUtil.getFilteredUsersByTopics(userOne.getTopics(), possibleUsers);
+        ArrayList<User> filteredByTopics = getFilteredUsersByTopics(userOne.topics(), possibleUsers);
         User userTwo;
         if (filteredByTopics.size() == 1) {
             userTwo = filteredByTopics.get(0);
         } else {
-            userTwo = serviceUtil.getUserToAge(userOne.getAge(), filteredByTopics).get();
+            userTwo = getUserToAge(userOne.age(), filteredByTopics).get();
         }
 
-        Topic randomTopic = serviceUtil.getRandomTopic(userOne, userTwo);
-        return new Pair<>(userTwo, randomTopic);
+        Topic randomTopic = getRandomTopic(userOne, userTwo);
+        return new HashMap<>() {
+            {
+                put(userTwo, randomTopic);
+            }
+        };
     }
+
     private Optional<String> getReceiverId(String sender) {
 
-        for (Room room : messageArea.getRooms()) {
+        for (Room room : messageArea.rooms()) {
 
-            if (room.getUsers().size() != 2) {
+            if (room.users().size() != 2) {
                 continue;
             }
 
-            if (sender.equals(room.getUsers().get(0).getId())) {
-                return Optional.ofNullable(room.getUsers().get(1).getId());
+            if (sender.equals(room.users().get(0).id())) {
+                return Optional.ofNullable(room.users().get(1).id());
             }
 
-            if (sender.equals(room.getUsers().get(1).getId())) {
-                return Optional.ofNullable(room.getUsers().get(0).getId());
+            if (sender.equals(room.users().get(1).id())) {
+                return Optional.ofNullable(room.users().get(0).id());
             }
         }
         return Optional.empty();
